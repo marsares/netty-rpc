@@ -16,6 +16,7 @@ import io.netty.util.internal.chmv8.ConcurrentHashMapV8;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by marsares on 15/7/23.
@@ -24,15 +25,23 @@ public class RpcConsumerImpl extends RpcConsumer {
     private DefaultClientHandler handler;
     private volatile Channel channel;
     private ConsumerHook hook;
+    private static AtomicLong callAmount = new AtomicLong(0L);
+    private EventLoopGroup workerGroup;
+    private CheckThread checkthread;
     public RpcConsumerImpl() {
         init();
+        checkthread=new CheckThread(1000000);
+        checkthread.setWorkerGroup(workerGroup);
+        checkthread.setCallAmount(callAmount);
+        Thread t=new Thread(checkthread);
+        t.start();
     }
 
     @Override
     public void init() {
-        String host = "127.0.0.1";
+        String host = System.getProperty("SIP");
         int port = 8888;
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
         try{
             Bootstrap b = new Bootstrap();
             b.group(workerGroup);
@@ -62,10 +71,11 @@ public class RpcConsumerImpl extends RpcConsumer {
         }catch(Exception e){
             e.printStackTrace();
         }
-        /*finally{
-            workerGroup.shutdownGracefully();
-        }*/
+    }
 
+    public void shutDown(){
+        System.out.println("shutdown");
+        workerGroup.shutdownGracefully();
     }
 
     @Override
@@ -87,6 +97,11 @@ public class RpcConsumerImpl extends RpcConsumer {
         if(rpcFuture==null)return null;
         Object result=rpcFuture.get(3000,TimeUnit.MILLISECONDS);
         if(result instanceof Exception)throw (Exception)result;
+        callAmount.incrementAndGet();
+        System.out.println(callAmount.get());
+        /*if(callAmount.intValue()>=8){
+            shutDown();
+        }*/
         return result;
     }
 
@@ -110,6 +125,7 @@ public class RpcConsumerImpl extends RpcConsumer {
     }
 
     public RpcContext createRequest(Object[] args, String ObjName, String FuncName,int callType,int FuncType) {
+        System.out.println(ObjName+" "+FuncName);
         RpcContext ctx = new RpcContext();
         RpcRequest request = new RpcRequest();
         request.setSeqNum(handler.getNextSequenceNumber());
@@ -121,6 +137,43 @@ public class RpcConsumerImpl extends RpcConsumer {
         ctx.setRequest(request);
         return ctx;
     }
+}
+class CheckThread implements Runnable{
+    private int callThred;
+    private static AtomicLong callAmount;
+    private EventLoopGroup workerGroup;
 
+    public CheckThread(int callThred){
+        this.callThred=callThred;
+    }
+    public static void setCallAmount(AtomicLong callAmount) {
+        CheckThread.callAmount = callAmount;
+    }
 
+    public EventLoopGroup getWorkerGroup() {
+        return workerGroup;
+    }
+
+    public void setWorkerGroup(EventLoopGroup workerGroup) {
+        this.workerGroup = workerGroup;
+    }
+
+    public static AtomicLong getCallAmount() {
+        return callAmount;
+    }
+
+    @Override
+    public void run() {
+        while(callAmount.intValue()<callThred){
+
+        }
+        try{
+            if(callAmount.intValue()>= callThred) {
+                System.out.println("shutdown");
+                workerGroup.shutdownGracefully();
+            }
+        }catch(Exception e){
+
+        }
+    }
 }

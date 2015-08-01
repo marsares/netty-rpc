@@ -43,7 +43,6 @@ public class DefaultClientHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext arg0, Object msg) throws Exception {
         if(msg instanceof RpcContext){
             RpcContext rpcCtx=(RpcContext)msg;
-            System.out.println(rpcCtx.getResponse().getSeqNum());
             if(rpcCtx.getResponse().getCallType()==0){
                 RpcFuture rpcFuture=pendingRpc.get(rpcCtx.getResponse().getSeqNum());
                 if(rpcFuture!=null){

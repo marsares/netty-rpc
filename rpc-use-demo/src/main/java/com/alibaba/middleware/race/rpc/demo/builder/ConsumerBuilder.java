@@ -24,7 +24,6 @@ public class ConsumerBuilder {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        System.out.println("instance is built");
         if(consumer == null){
             System.out.println("Start rpc consumer failed");
             System.exit(1);
@@ -40,8 +39,9 @@ public class ConsumerBuilder {
     public boolean pressureTest() {
         try {
             RaceDO result = apiService.getDO();
-            if (result == null)
+            if (result == null){
                 return false;
+            }
         } catch (Throwable t) {
             return false;
         }

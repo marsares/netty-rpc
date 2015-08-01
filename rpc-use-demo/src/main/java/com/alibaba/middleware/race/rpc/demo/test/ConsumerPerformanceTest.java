@@ -33,16 +33,20 @@ public class ConsumerPerformanceTest extends ConsumerTest{
         long startTime = System.currentTimeMillis();
 
         final ExecutorService executor = Executors.newFixedThreadPool(coreCount);
+        System.out.println("corecount="+coreCount);
         for(int i = 0 ; i < coreCount ; i++){
             executor.execute(new Runnable() {
                 public void run() {
                     while(callAmount.get() < 1000000){
                         try {
                             if((Boolean)performanceTestMethod.invoke(consumerBuilder,null))
+                            {
                                 callAmount.incrementAndGet();
+                            }
                             else
                                 continue;
                         } catch (Exception e) {
+                            e.printStackTrace();
                             continue;
                         }
                     }
@@ -65,5 +69,6 @@ public class ConsumerPerformanceTest extends ConsumerTest{
             outputStream.write(sb.toString().getBytes());
             outputStream.close();
         }
+        System.exit(1);
     }
 }

@@ -15,16 +15,14 @@ import java.util.Map;
 public class RpcContext {
     private RpcRequest request;
     private RpcResponse response;
-    public static ThreadLocal<DefaultClientHandler> handler=new ThreadLocal<DefaultClientHandler>();
+    public static DefaultClientHandler handler;
 
     public static DefaultClientHandler getHandler() {
-        DefaultClientHandler clientHandler=handler.get();
-        handler.set(clientHandler);
-        return clientHandler;
+        return handler;
     }
 
     public static void setHandler(DefaultClientHandler clientHandler) {
-        handler.set(clientHandler);
+        handler=clientHandler;
     }
 
     public RpcResponse getResponse() {
